@@ -1,2 +1,2 @@
 # scram2
-Update and integrated small RNA extracting match aligner and visualisation pipeline
+Updated and integrated small RNA exact match aligner and visualisation pipeline
