@@ -1,4 +1,4 @@
-package wrangle
+package main
 
 import (
 	"bufio"
@@ -6,17 +6,12 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
-
-	"github.com/dustin/go-humanize"
-
-	// "github.com/montanaflynn/stats"
-	// "math"
 	"os"
 	"path"
-
-	// "strconv"
 	"strings"
 	"sync"
+
+	"github.com/dustin/go-humanize"
 )
 
 func ErrorShutdown() {
@@ -58,16 +53,6 @@ func loadFiles(seqFiles []string, fileType string, minLen int, maxLen int, minCo
 	srnaMaps := make(chan map[string]map[string]float64, len(seqFiles))
 	for a := 0; a < len(seqFiles); a++ {
 		switch {
-		// case fileType == "cfa":
-		// 	if a == 0 {
-		// 		fmt.Println("\nAttempting to load read files in the default collapsed FASTA format")
-		// 	}
-		// 	go loadCfaFile(fileNames, srnaMaps, minLen, maxLen, minCount, "-", noNorm, wg)
-		// case fileType == "clean":
-		// 	if a == 0 {
-		// 		fmt.Println("\nAttempting to load read files in BGI clean format")
-		// 		go loadCfaFile(fileNames, srnaMaps, minLen, maxLen, minCount, " ", noNorm, wg)
-		// 	}
 		case fileType == "fa":
 			if a == 0 {
 				fmt.Println("\nAttempting to load read files in FASTA format")
@@ -87,70 +72,10 @@ func loadFiles(seqFiles []string, fileType string, minLen int, maxLen int, minCo
 	return noOfFiles, srnaMaps
 }
 
-// // loadCfaFile loads a single collapsed read file and return map of read sequence as key and normalised RPMR count as value
-// func loadCfaFile(fileNames chan string, srnaMaps chan map[string]map[string]float64,
-// 	minLen int, maxLen int, minCount float64, sep string, noNorm bool, wg *sync.WaitGroup) {
-// 	srnaMap := make(map[string]float64)
-// 	var count float64
-// 	var totalCount float64
-
-// 	fileName := <-fileNames
-// 	f, err := os.Open(fileName)
-// 	defer f.Close()
-// 	if err != nil {
-// 		fmt.Println("\nCan't load collapsed read file " + fileName)
-// 		os.Exit(1)
-// 	}
-// 	scanner := bufio.NewScanner(f)
-// 	if fileName[len(fileName)-2:] == "gz" {
-// 		gz, err := gzip.NewReader(f)
-// 		if err != nil {
-// 			fmt.Println("\nCan't decompress read file " + fileName)
-// 			os.Exit(1)
-// 		}
-// 		defer gz.Close()
-// 		scanner = bufio.NewScanner(gz)
-// 	}
-// 	seqNext := false
-// 	for scanner.Scan() {
-// 		fastaLine := scanner.Text()
-// 		if seqNext == true && len(fastaLine) == 0 {
-// 			fmt.Println("Read file format problem - blank line between header and sequence in " + fileName)
-// 			ErrorShutdown()
-// 		}
-// 		if strings.HasPrefix(fastaLine, ">") {
-// 			headerLine := strings.Split(fastaLine, sep)
-// 			err := checkHeaderError(headerLine, fileName)
-// 			if err != nil {
-// 				fmt.Println("Read file format problem - header error in " + fileName)
-// 				ErrorShutdown()
-// 			}
-// 			count, err = strconv.ParseFloat(strings.Split(fastaLine, sep)[1], 32)
-// 			seqNext = true
-// 		} else if count >= minCount && len(fastaLine) >= minLen && len(fastaLine) <= maxLen {
-// 			totalCount += count
-// 			srnaMap[strings.ToUpper(fastaLine)] = count
-// 			seqNext = false
-// 		}
-// 	}
-// 	if noNorm == false {
-// 		srnaMap = rpmrNormalize(srnaMap, totalCount)
-// 	}
-// 	finalMap := map[string]map[string]float64{fileName: srnaMap}
-// 	srnaMaps <- finalMap
-
-// 	fmt.Println(fileName + " - " + humanize.Comma(int64(totalCount)) + " reads processed")
-// 	wg.Done()
-// }
-
 // loadFastx loads a single FASTA or FASTQ file and return map of read sequence as key and normalised RPMR count as
 // value. Trim adapter from 3' end using up to 12 nt of 5' end of adapter as seed if required
 func loadFastx(fileNames chan string, firstChar []byte, adapter string, srnaMaps chan map[string]map[string]float64,
 	minLen int, maxLen int, minCount float64, noNorm bool, wg *sync.WaitGroup) {
-	// trim := false
-	// var seed string
-	// trim, seed = trimAdapter(adapter, trim, seed)
-
 	srnaMap := make(map[string]float64)
 	var totalCount float64
 	fileName := <-fileNames
@@ -177,9 +102,6 @@ func loadFastx(fileNames chan string, firstChar []byte, adapter string, srnaMaps
 		switch {
 		case bytes.Equal(fasta_line[:1], firstChar):
 			seqNext = true
-		// case seqNext == true && trim == true:
-		// 	srnaMap, totalCount, seqNext = addTrimmedRead(fasta_line, seed, minLen,
-		// 		maxLen, srnaMap, totalCount, seqNext)
 		case seqNext == true && len(fasta_line) >= minLen && len(fasta_line) <= maxLen:
 			srnaMap, totalCount, seqNext = addFullLengthRead(srnaMap, fasta_line, totalCount, seqNext)
 		}
@@ -194,37 +116,6 @@ func loadFastx(fileNames chan string, firstChar []byte, adapter string, srnaMaps
 	fmt.Println(fileName + " - " + humanize.Comma(int64(totalCount)) + " reads processed")
 	wg.Done()
 }
-
-// // If adapter present, set seed for trimming (5' up to 12 nt of adapter sequence)
-// func trimAdapter(adapter string, trim bool, seed string) (bool, string) {
-// 	if adapter != "nil" {
-// 		trim = true
-// 		switch {
-// 		case len(adapter) < 12:
-// 			seed = adapter
-// 		default:
-// 			seed = adapter[:11]
-// 		}
-// 	}
-// 	return trim, seed
-// }
-
-// Trim read and add it to the srna_map
-// func addTrimmedRead(fasta_line []byte, seed string, min_len int, max_len int, srna_map map[string]float64,
-// 	total_count float64, seq_next bool) (map[string]float64, float64, bool) {
-// 	read_slice := bytes.Split(fasta_line, []byte(seed))
-// 	if len(read_slice) == 2 && len(read_slice[0]) >= min_len && len(read_slice[0]) <= max_len {
-// 		if srna_count, ok := srna_map[string(read_slice[0])]; ok {
-// 			srna_map[string(read_slice[0])] = srna_count + 1.0
-// 			total_count += 1.0
-// 		} else {
-// 			srna_map[string(read_slice[0])] = 1.0
-// 			total_count += 1.0
-// 		}
-// 	}
-// 	seq_next = false
-// 	return srna_map, total_count, seq_next
-// }
 
 // Add full-length read to the srna map
 func addFullLengthRead(srna_map map[string]float64, fasta_line []byte, total_count float64,
@@ -270,7 +161,7 @@ func checkHeaderError(headerLine []string, file_name string) error {
 	return nil
 }
 
-// Compile_counts generates a map wit read seq as key and a slice of normalised counts for each read file
+// Compile_counts generates a map with read seq as key and a slice of normalised counts for each read file
 func compileCounts(srna_maps chan map[string]map[string]float64, no_of_files int, min_count float64) (map[string]interface{}, []string) {
 	// map [srna:[count1,count2....], ...]
 	seq_map_all_counts := make(map[string]interface{})
@@ -314,30 +205,6 @@ func removeUnderMinCount(seq_map_all_counts map[string]interface{}) {
 		}
 	}
 }
-
-// MeanSe is a struct comprising a normalised mean and standard error for a read
-// type MeanSe struct {
-// 	Mean float64
-// 	Se   float64
-// }
-
-// calcMeanSe calculates the mean and standard error for each slice of counts
-// func calcMeanSe(seq_map_all_counts map[string]interface{}, no_of_files int) map[string]interface{} {
-// 	seqMap := make(map[string]interface{})
-// 	sqrt := math.Sqrt(float64(no_of_files))
-// 	for srna := range seq_map_all_counts {
-// 		counts := seq_map_all_counts[srna]
-// 		switch {
-// 		case no_of_files > 1:
-// 			countsMean, _ := stats.Mean(*counts.(*[]float64))
-// 			countsStdDev, _ := stats.StandardDeviationSample(*counts.(*[]float64))
-// 			seqMap[srna] = &MeanSe{countsMean, countsStdDev / sqrt}
-// 		default:
-// 			seqMap[srna] = &MeanSe{(*counts.(*[]float64))[0], 0.0}
-// 		}
-// 	}
-// 	return seqMap
-// }
 
 // HeaderRef is a struct comprising a reference sequence header, seques and reverse complement
 type HeaderRef struct {
@@ -401,43 +268,3 @@ func reverseComplement(seq string) string {
 	}
 	return result.String()
 }
-
-// // a struct for mature miRNAs that are present more than once in a reference set (i.e. same mature seq / dif precursor
-// // seq.
-// type mirnaSeqDup struct {
-// 	seq string
-// 	dup float64
-// }
-
-// // MirLoad loads mature miRNA sequences from a mirna FASTA file (i.e. generated from miRBase)
-// // It returns a map of headers : mirna sequences (converted to DNA)
-// func MirLoad(mirFile string) map[string]*mirnaSeqDup {
-// 	var header string
-// 	mirnaMap := make(map[string]*mirnaSeqDup)
-// 	mirnaDups := make(map[string]float64)
-// 	f, err := os.Open(mirFile)
-// 	defer f.Close()
-// 	if err != nil {
-// 		fmt.Println("Problem opening fasta reference file " + mirFile)
-// 		ErrorShutdown()
-// 	}
-// 	scanner := bufio.NewScanner(f)
-// 	for scanner.Scan() {
-// 		fastaLine := scanner.Text()
-// 		switch {
-// 		case strings.HasPrefix(fastaLine, ">"):
-// 			header = fastaLine[1:]
-// 		case len(fastaLine) != 0:
-// 			seq := strings.Replace(strings.ToUpper(fastaLine), "U", "T", -1)
-// 			mirnaMap[header] = &mirnaSeqDup{seq, 0.0}
-// 			mirnaDups[seq] += 1.0
-// 		}
-
-// 	}
-// 	for mirnaHeader, seqDup := range mirnaMap {
-// 		if dup, ok := mirnaDups[seqDup.seq]; ok {
-// 			mirnaMap[mirnaHeader].dup = dup
-// 		}
-// 	}
-// 	return mirnaMap
-// }

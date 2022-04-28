@@ -1,4 +1,4 @@
-package profile
+package main
 
 import (
 	"encoding/csv"
@@ -9,11 +9,9 @@ import (
 	"sort"
 	"strconv"
 	"sync"
-	"scram2/wrangle"
 )
 
 // type MeanSe = wrangle.MeanSe
-type HeaderRef = wrangle.HeaderRef
 
 //Details of an alignment for a discrete srna - MeanSe
 type singleAlignment struct {
@@ -42,7 +40,7 @@ func (slice singleAlignments) Swap(i, j int) {
 //single_alignment structs (read seq, position, count, se).  The count for each read alignment is NOT split by the
 //number of times a read aligns.
 func ProfileNoSplit(alignmentMap map[string]map[string][]int, seqMap map[string]interface{}) map[string]interface{} {
-	srnaAlignmentMap := wrangle.CalcTimesReadAligns(alignmentMap)
+	srnaAlignmentMap := CalcTimesReadAligns(alignmentMap)
 	profileAlignmentsMap := make(map[string]interface{})
 	for header, alignments := range alignmentMap {
 		var combinedAlignments singleAlignments
@@ -99,7 +97,7 @@ func ProfileSplit(alignmentMap map[string]map[string][]int, seqMap map[string]in
 	wg := &sync.WaitGroup{}
 	wg.Add(alignmentsNo)
 
-	srnaAlignmentMap := wrangle.CalcTimesReadAligns(alignmentMap)
+	srnaAlignmentMap := CalcTimesReadAligns(alignmentMap)
 
 	alignmentsForGoroutine := make(chan alignmentStruct, alignmentsNo)
 	outputFromGoroutine := make(chan outputStruct, alignmentsNo)
@@ -125,7 +123,7 @@ func ProfileSplit(alignmentMap map[string]map[string][]int, seqMap map[string]in
 	return profileAlignmentsMap
 }
 
-func profileSplitWorker(alignmentsForGoroutine chan alignmentStruct, outpu tFromGoroutine chan outputStruct,
+func profileSplitWorker(alignmentsForGoroutine chan alignmentStruct, outputFromGoroutine chan outputStruct,
 	seqMap map[string]interface{}, srnaAlignmentMap map[string]int, wg *sync.WaitGroup) {
 	singleAlign := <-alignmentsForGoroutine
 	var combinedAlignmentsMeanSe singleAlignments
@@ -219,7 +217,7 @@ func ProfileToCsv(profileAlignmentsMap map[string]interface{}, refSlice []*Heade
 	f, err := os.Create(outFile)
 	if err != nil {
 		fmt.Println("Can't open csv file for writing")
-		wrangle.ErrorShutdown()
+		ErrorShutdown()
 	}
 	w := csv.NewWriter(f)
 	w.WriteAll(rows)

@@ -1,4 +1,4 @@
-package wrangle
+package main
 
 import (
 	"sync"
@@ -97,7 +97,6 @@ func compile_alignments(header_map_chan chan map[string]map[string][]int) map[st
 // 	}
 // 	return mirna_alignment_map
 // }
-
 
 func CalcTimesReadAligns(alignmentMap map[string]map[string][]int) map[string]int {
 	srnaAlignmentMap := make(map[string]int)
