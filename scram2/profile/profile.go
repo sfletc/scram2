@@ -125,7 +125,7 @@ func ProfileSplit(alignmentMap map[string]map[string][]int, seqMap map[string]in
 	return profileAlignmentsMap
 }
 
-func profileSplitWorker(alignmentsForGoroutine chan alignmentStruct, outputFromGoroutine chan outputStruct,
+func profileSplitWorker(alignmentsForGoroutine chan alignmentStruct, outpu tFromGoroutine chan outputStruct,
 	seqMap map[string]interface{}, srnaAlignmentMap map[string]int, wg *sync.WaitGroup) {
 	singleAlign := <-alignmentsForGoroutine
 	var combinedAlignmentsMeanSe singleAlignments
