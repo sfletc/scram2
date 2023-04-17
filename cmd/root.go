@@ -78,8 +78,6 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&outFilePrefix, "outFilePrefix", "o", "", "path/to/outfile prefix (len.csv will be appended)")
 	RootCmd.PersistentFlags().BoolVar(&noSplit, "noSplit", false, "Do not split alignment count for each read by the number of times it aligns")
 	RootCmd.PersistentFlags().BoolVar(&noNorm, "noNorm", false, "Do not normalize read counts by library size (i.e. reads per million reads)")
-	RootCmd.PersistentFlags().BoolVar(&indv, "indv", true, "Output individual replicate file alignment counts")
-	RootCmd.PersistentFlags().Lookup("noSplit").NoOptDefVal = "true"
 	RootCmd.PersistentFlags().IntVar(&minLen, "minLen", 18, "Minimum read length to include for RPMR normalization")
 	RootCmd.PersistentFlags().IntVar(&maxLen, "maxLen", 32, "Maximum read length to include for RPMR normalization")
 	RootCmd.PersistentFlags().Float64Var(&minCount, "minCount", 1.0, "Minimum read count for alignment and to include for RPMR normalization")

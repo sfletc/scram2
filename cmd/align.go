@@ -41,85 +41,56 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var compareCmd = &cobra.Command{
-	Use:   "compare",
-	Short: "Compare alignment counts per reference sequence for 2 read file sets",
-	Long: `Compare alignment counts per reference sequence for 2 read file sets
+// profileCmd represents the profile command
+
+var alignCmd = &cobra.Command{
+	Use:   "align",
+	Short: "Align reads of length l from 1 read file set to all sequences in a reference file",
+	Long: `Align reads of length l from 1 read file set to all sequences in a reference file
 
 For example:
 
-scram2 compare -r ref.fa -1 seq1a.fa,seq1b.fa,seq1c.fa -2 seq2a.fa,seq2b.fa,seq2c.fa -l 21,22,24 -o testAlign`,
+scram2 align -r ref.fa -1 seq1a.fa,seq1b.fa,seq1c.fa -l 21,22,24 -o testAlign
+
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if readFileType != "cfa" && readFileType != "fa" && readFileType != "fq" && readFileType != "clean" {
 			fmt.Println("\nCan't parse read file type " + readFileType)
 			os.Exit(1)
 		}
 		t0 := time.Now()
-
 		var a map[string]interface{}
-		var aFileOrder []string
-		var b map[string]interface{}
-		var bFileOrder []string
+		var fileOrder []string
 		switch {
 		case !indv:
 			fmt.Println("\nLoading mean and standard errors of replicate reads")
 			a = scramPkg.SeqLoad(strings.Split(fastaSet1, ","), readFileType, adapter, minLen, maxLen, minCount, noNorm)
-			b = scramPkg.SeqLoad(strings.Split(fastaSet2, ","), readFileType, adapter, minLen, maxLen, minCount, noNorm)
 		case indv:
 			fmt.Println("\nLoading individual read counts")
-			a, aFileOrder = scramPkg.IndvSeqLoad(strings.Split(fastaSet1, ","), readFileType, adapter, minLen, maxLen, minCount, noNorm)
-			b, bFileOrder = scramPkg.IndvSeqLoad(strings.Split(fastaSet2, ","), readFileType, adapter, minLen, maxLen, minCount, noNorm)
+			a, fileOrder = scramPkg.IndvSeqLoad(strings.Split(fastaSet1, ","), readFileType, adapter, minLen, maxLen, minCount, noNorm)
 		}
 		fmt.Println("\nLoading reference")
-
-		switch {
-		case !mir:
-			c := scramPkg.RefLoad(alignTo)
-
-			for _, nt := range strings.Split(length, ",") {
-				nt, _ := strconv.Atoi(nt)
-				fmt.Printf("\nAligning %v nt reads\n", nt)
-
-				d := scramPkg.AlignReads(a, c, nt)
-				e := scramPkg.AlignReads(b, c, nt)
-				switch {
-				case !noSplit:
-
-					f := scramPkg.CompareSplitCounts(d, a)
-
-					g := scramPkg.CompareSplitCounts(e, b)
-					h := scramPkg.Compare(f, g)
-					scramPkg.CompareToCsv(h, nt, outFilePrefix, aFileOrder, bFileOrder)
-				default:
-
-					f := scramPkg.CompareNoSplitCounts(d, a)
-
-					g := scramPkg.CompareNoSplitCounts(e, b)
-					h := scramPkg.Compare(f, g)
-					scramPkg.CompareToCsv(h, nt, outFilePrefix, aFileOrder, bFileOrder)
-				}
-			}
-		default:
-			c := scramPkg.MirLoad(alignTo)
-			d := scramPkg.AlignMirnas(a, c)
-			e := scramPkg.AlignMirnas(b, c)
+		c := scramPkg.RefLoad(alignTo)
+		for _, nt := range strings.Split(length, ",") {
+			nt, _ := strconv.Atoi(nt)
+			fmt.Printf("\nAligning %v nt reads\n", nt)
+			d := scramPkg.AlignReads(a, c, nt)
 			switch {
 			case !noSplit:
-				f := scramPkg.MirnaCompare(d, e, false)
-				scramPkg.CompareToCsv(f, 0, outFilePrefix, aFileOrder, bFileOrder)
+				e := scramPkg.ProfileSplit(d, a)
+				scramPkg.ProfileToCsv(e, c, nt, outFilePrefix, fileOrder)
 			default:
-				f := scramPkg.MirnaCompare(d, e, true)
-				scramPkg.CompareToCsv(f, 0, outFilePrefix, aFileOrder, bFileOrder)
+				e := scramPkg.ProfileNoSplit(d, a)
+				scramPkg.ProfileToCsv(e, c, nt, outFilePrefix, fileOrder)
+
 			}
 		}
-
 		t1 := time.Now()
 		fmt.Printf("\nAlignment complete.  Total time taken = %s\n", t1.Sub(t0))
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(compareCmd)
-	compareCmd.Flags().StringVarP(&fastaSet2, "fastxSet2", "2", "", "comma-separated path/to/read file set 2. GZIPped files must have .gz file extension")
-	compareCmd.Flags().BoolVar(&mir, "mir", false, "Exact match reads to mature miRNAs")
+	RootCmd.AddCommand(alignCmd)
+
 }

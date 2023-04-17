@@ -2,10 +2,11 @@ package scramPkg
 
 import (
 	"fmt"
-	"github.com/montanaflynn/stats"
 	"math"
 	"reflect"
 	"testing"
+
+	"github.com/montanaflynn/stats"
 )
 
 func TestSeqLoad_single(t *testing.T) {
@@ -217,105 +218,6 @@ func TestAlign(t *testing.T) {
 
 }
 
-func TestCompareAlign(t *testing.T) {
-	test_ref := RefLoad("./test_data/test_ref_align.fa")
-
-	var seq_files []string
-	seq_files = append(seq_files, "./test_data/test_seq_1.fa")
-	test_seq := SeqLoad(seq_files, "cfa", "nil", 18, 32, 1.0, false)
-	test_align_1 := AlignReads(test_seq, test_ref, 24)
-	test_align_2 := AlignReads(test_seq, test_ref, 24)
-	fmt.Println(test_align_1, test_align_2)
-	test_align_1_split := CompareSplitCounts(test_align_1, test_seq)
-	test_align_2_split := CompareSplitCounts(test_align_2, test_seq)
-	fmt.Println(test_align_1_split, test_align_2_split)
-	test_align_1_nosplit := CompareNoSplitCounts(test_align_1, test_seq)
-	test_align_2_nosplit := CompareNoSplitCounts(test_align_2, test_seq)
-	fmt.Println(test_align_1_nosplit, test_align_2_nosplit)
-	compare_split := Compare(test_align_1_split, test_align_2_split)
-	compare_no_split := Compare(test_align_1_nosplit, test_align_2_nosplit)
-	fmt.Println(compare_split)
-
-	compare_split_should_be := make(map[string]interface{})
-	compare_split_should_be["ref_1"] = compMeanSeOutput{}
-	compare_split_should_be["ref_1"] = compare_split_should_be["ref_1"].(compMeanSeOutput).append(200000.0, 0.0, 200000.0, 0.0)
-	compare_split_should_be["ref_2"] = compMeanSeOutput{}
-	compare_split_should_be["ref_2"] = compare_split_should_be["ref_2"].(compMeanSeOutput).append(350000.0, 0.0, 350000.0, 0.0)
-	compare_split_should_be["ref_3"] = compMeanSeOutput{}
-	compare_split_should_be["ref_3"] = compare_split_should_be["ref_3"].(compMeanSeOutput).append(200000.0, 0.0, 200000.0, 0.0)
-
-	fmt.Println(compare_split_should_be)
-	eq := reflect.DeepEqual(compare_split, compare_split_should_be)
-	if eq == false {
-		t.Error("Compare split alignments not equal")
-	}
-
-	compare_no_split_should_be := make(map[string]interface{})
-	compare_no_split_should_be["ref_1"] = compMeanSeOutput{}
-	compare_no_split_should_be["ref_1"] = compare_no_split_should_be["ref_1"].(compMeanSeOutput).append(1000000.0, 0.0, 1000000.0, 0.0)
-	compare_no_split_should_be["ref_2"] = compMeanSeOutput{}
-	compare_no_split_should_be["ref_2"] = compare_no_split_should_be["ref_2"].(compMeanSeOutput).append(750000.0, 0.0, 750000.0, 0.0)
-	compare_no_split_should_be["ref_3"] = compMeanSeOutput{}
-	compare_no_split_should_be["ref_3"] = compare_no_split_should_be["ref_3"].(compMeanSeOutput).append(1000000.0, 0.0, 1000000.0, 0.0)
-	fmt.Println(compare_no_split)
-	fmt.Println(compare_no_split_should_be)
-	eq2 := reflect.DeepEqual(compare_no_split, compare_no_split_should_be)
-	if eq2 == false {
-		t.Error("Compare no split alignments not equal")
-	}
-}
-
-func TestIndvCompareAlign(t *testing.T) {
-	test_ref := RefLoad("./test_data/test_ref_align.fa")
-
-	var seq_files []string
-	seq_files = append(seq_files, "./test_data/test_seq_1.fa", "./test_data/test_seq_1.fa")
-	test_seq, _ := IndvSeqLoad(seq_files, "cfa", "nil", 18, 32, 1.0, false)
-	for key, value := range test_seq {
-		fmt.Println(key, value)
-	}
-	test_align_1 := AlignReads(test_seq, test_ref, 24)
-	test_align_2 := AlignReads(test_seq, test_ref, 24)
-	fmt.Println(test_align_1, test_align_2)
-	test_align_1_split := CompareSplitCounts(test_align_1, test_seq)
-	test_align_2_split := CompareSplitCounts(test_align_2, test_seq)
-	fmt.Println(test_align_1_split, test_align_2_split)
-	test_align_1_nosplit := CompareNoSplitCounts(test_align_1, test_seq)
-	test_align_2_nosplit := CompareNoSplitCounts(test_align_2, test_seq)
-	fmt.Println(test_align_1_nosplit, test_align_2_nosplit)
-	compare_split := Compare(test_align_1_split, test_align_2_split)
-	compare_no_split := Compare(test_align_1_nosplit, test_align_2_nosplit)
-	fmt.Println(compare_split)
-
-	compare_split_should_be := make(map[string]interface{})
-	compare_split_should_be["ref_1"] = countsOutput{}
-	compare_split_should_be["ref_1"] = compare_split_should_be["ref_1"].(countsOutput).append(200000.0, 200000.0, 200000.0, 200000.0)
-	compare_split_should_be["ref_2"] = countsOutput{}
-	compare_split_should_be["ref_2"] = compare_split_should_be["ref_2"].(countsOutput).append(350000.0, 350000.0, 350000.0, 350000.0)
-	compare_split_should_be["ref_3"] = countsOutput{}
-	compare_split_should_be["ref_3"] = compare_split_should_be["ref_3"].(countsOutput).append(200000.0, 200000.0, 200000.0, 200000.0)
-
-	fmt.Println(compare_split_should_be)
-	eq := reflect.DeepEqual(compare_split, compare_split_should_be)
-	if eq == false {
-		t.Error("Indv Compare split alignments not equal")
-	}
-	fmt.Println(compare_no_split)
-	compare_no_split_should_be := make(map[string]interface{})
-	compare_no_split_should_be["ref_1"] = countsOutput{}
-	compare_no_split_should_be["ref_1"] = compare_no_split_should_be["ref_1"].(countsOutput).append(1000000.0, 1000000.0, 1000000.0, 1000000.0)
-	compare_no_split_should_be["ref_2"] = countsOutput{}
-	compare_no_split_should_be["ref_2"] = compare_no_split_should_be["ref_2"].(countsOutput).append(750000.0, 750000.0, 750000.0, 750000.0)
-	compare_no_split_should_be["ref_3"] = countsOutput{}
-	compare_no_split_should_be["ref_3"] = compare_no_split_should_be["ref_3"].(countsOutput).append(1000000.0, 1000000.0, 1000000.0, 1000000.0)
-	fmt.Println(compare_no_split)
-	fmt.Println(compare_no_split_should_be)
-	eq2 := reflect.DeepEqual(compare_no_split, compare_no_split_should_be)
-	if eq2 == false {
-		t.Error("Indv Compare split alignments not equal")
-	}
-}
-
 func TestProfileAlign(t *testing.T) {
 	test_ref := RefLoad("./test_data/test_ref_align.fa")
 
@@ -459,59 +361,5 @@ func TestProfileAlignIndv(t *testing.T) {
 	eq2 := reflect.DeepEqual(should_be_no_split, test_align_1_no_split)
 	if eq2 == false {
 		t.Error("Profile no split alignment is incorrect")
-	}
-}
-
-func TestMirAlign(t *testing.T) {
-	test_mir_ref := MirLoad("./test_data/test_mir_align.fa")
-	var seq_files []string
-	seq_files = append(seq_files, "./test_data/test_seq_6.fa")
-	test_seq := SeqLoad(seq_files, "cfa", "nil", 1, 32, 1.0, false)
-	test_align_1 := AlignMirnas(test_seq, test_mir_ref)
-	test_align_2 := AlignMirnas(test_seq, test_mir_ref)
-	noSplitMap := MirnaCompare(test_align_1, test_align_2, true)
-	splitMap := MirnaCompare(test_align_1, test_align_2, false)
-	fmt.Println(noSplitMap, splitMap)
-	shouldBeNoSplit := map[string]interface{}{"mir_1": compMeanSeOutput{[]float64{500000, 0, 500000, 0}},
-		"mir_3": compMeanSeOutput{[]float64{500000, 0, 500000, 0}},
-		"mir_2": compMeanSeOutput{[]float64{250000, 0, 250000, 0}}}
-	shouldBeSplit := map[string]interface{}{"mir_1": compMeanSeOutput{[]float64{250000, 0, 250000, 0}},
-		"mir_3": compMeanSeOutput{[]float64{250000, 0, 250000, 0}},
-		"mir_2": compMeanSeOutput{[]float64{250000, 0, 250000, 0}}}
-	fmt.Println(shouldBeNoSplit, shouldBeSplit)
-	eq_1 := reflect.DeepEqual(noSplitMap, shouldBeNoSplit)
-	if eq_1 == false {
-		t.Error("noSplit mir alignments are not equal")
-	}
-	eq_2 := reflect.DeepEqual(splitMap, shouldBeSplit)
-	if eq_2 == false {
-		t.Error("split mir alignments are not equal")
-	}
-}
-
-func TestIndvMirAlign(t *testing.T) {
-	test_mir_ref := MirLoad("./test_data/test_mir_align.fa")
-	var seq_files []string
-	seq_files = append(seq_files, "./test_data/test_seq_6.fa")
-	test_seq, _ := IndvSeqLoad(seq_files, "cfa", "nil", 1, 32, 1.0, false)
-	test_align_1 := AlignMirnas(test_seq, test_mir_ref)
-	test_align_2 := AlignMirnas(test_seq, test_mir_ref)
-	noSplitMap := MirnaCompare(test_align_1, test_align_2, true)
-	splitMap := MirnaCompare(test_align_1, test_align_2, false)
-	fmt.Println(noSplitMap, splitMap)
-	shouldBeNoSplit := map[string]interface{}{"mir_1": countsOutput{[]float64{500000, 500000}},
-		"mir_3": countsOutput{[]float64{500000, 500000}},
-		"mir_2": countsOutput{[]float64{250000, 250000}}}
-	shouldBeSplit := map[string]interface{}{"mir_1": countsOutput{[]float64{250000, 250000}},
-		"mir_3": countsOutput{[]float64{250000, 250000}},
-		"mir_2": countsOutput{[]float64{250000, 250000}}}
-	fmt.Println(shouldBeNoSplit, shouldBeSplit)
-	eq_1 := reflect.DeepEqual(noSplitMap, shouldBeNoSplit)
-	if eq_1 == false {
-		t.Error("noSplit mir alignments are not equal")
-	}
-	eq_2 := reflect.DeepEqual(splitMap, shouldBeSplit)
-	if eq_2 == false {
-		t.Error("split mir alignments are not equal")
 	}
 }

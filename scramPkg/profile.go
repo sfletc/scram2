@@ -41,7 +41,7 @@ import (
 	"sync"
 )
 
-//Details of an alignment for a discrete srna - meanSe
+// Details of an alignment for a discrete srna - meanSe
 type singleAlignment struct {
 	Seq          string // Seq is an aligned read sequence
 	timesAligned int    // No of times the read has aligned
@@ -50,7 +50,7 @@ type singleAlignment struct {
 	Alignments   interface{}
 }
 
-//collection for sorting
+// collection for sorting
 type singleAlignments []*singleAlignment
 
 func (slice singleAlignments) Len() int {
@@ -63,10 +63,10 @@ func (slice singleAlignments) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-//ProfileNoSplit takes and alignment map and a sequence map as an input.  It returns a map of single alignments
-//with a reference header as key and a single alignments struct as value.  Each single alignments struct is comprised of
-//single_alignment structs (read seq, position, count, se).  The count for each read alignment is NOT split by the
-//number of times a read aligns.
+// ProfileNoSplit takes and alignment map and a sequence map as an input.  It returns a map of single alignments
+// with a reference header as key and a single alignments struct as value.  Each single alignments struct is comprised of
+// single_alignment structs (read seq, position, count, se).  The count for each read alignment is NOT split by the
+// number of times a read aligns.
 func ProfileNoSplit(alignmentMap map[string]map[string][]int, seqMap map[string]interface{}) map[string]interface{} {
 	srnaAlignmentMap := calcTimesReadAligns(alignmentMap)
 	profileAlignmentsMap := make(map[string]interface{})
@@ -114,6 +114,21 @@ type alignmentStruct struct {
 type outputStruct struct {
 	header             string
 	combinedAlignments interface{}
+}
+
+// Calculates the number of times an aligned read aligns
+func calcTimesReadAligns(alignmentMap map[string]map[string][]int) map[string]int {
+	srnaAlignmentMap := make(map[string]int)
+	for _, alignment := range alignmentMap {
+		for srna, pos := range alignment {
+			if _, ok := srnaAlignmentMap[srna]; ok {
+				srnaAlignmentMap[srna] += len(pos)
+			} else {
+				srnaAlignmentMap[srna] = len(pos)
+			}
+		}
+	}
+	return srnaAlignmentMap
 }
 
 // ProfileSplit takes and alignment map and a sequence map as an input.  It returns a map of single alignments
@@ -195,7 +210,7 @@ func profileSplitWorker(alignmentsForGoroutine chan alignmentStruct, outputFromG
 	wg.Done()
 }
 
-//ProfileToCsv writes the  den results to a csv file
+// ProfileToCsv writes the  den results to a csv file
 func ProfileToCsv(profileAlignmentsMap map[string]interface{}, refSlice []*HeaderRef, nt int, outPrefix string, fileOrder []string) {
 
 	firstRow := true
