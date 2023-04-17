@@ -33,7 +33,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"scram2/scramPkg"
+	scramPkg "scram2/scramPkg"
 	"strconv"
 	"strings"
 	"time"
@@ -44,7 +44,7 @@ import (
 // profileCmd represents the profile command
 
 var alignCmd = &cobra.Command{
-	Use:   "align",
+	Use:   "profile",
 	Short: "Align reads of length l from 1 read file set to all sequences in a reference file",
 	Long: `Align reads of length l from 1 read file set to all sequences in a reference file
 

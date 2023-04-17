@@ -1,4 +1,4 @@
-package scramPkg
+package pkg
 
 import (
 	"fmt"
